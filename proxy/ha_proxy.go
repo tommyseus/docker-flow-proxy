@@ -295,7 +295,7 @@ func (m HaProxy) getConfigData() configData {
 	defaultPorts := strings.Split(defaultPortsString, ",")
 	for _, bindPort := range defaultPorts {
 		formattedPort := strings.Replace(bindPort, ":ssl", d.CertsString, -1)
-		d.DefaultBinds += fmt.Sprintf("\n    bind *:%s", formattedPort)
+		d.DefaultBinds += fmt.Sprintf(m.getBindLine(), formattedPort)
 	}
 	extraGlobal := getSecretOrEnvVarSplit("EXTRA_GLOBAL", "")
 	if len(extraGlobal) > 0 {
@@ -306,7 +306,7 @@ func (m HaProxy) getConfigData() configData {
 		bindPorts := strings.Split(bindPortsString, ",")
 		for _, bindPort := range bindPorts {
 			formatedBindPort := strings.Replace(bindPort, ":ssl", d.CertsString, -1)
-			d.ExtraFrontend += fmt.Sprintf("\n    bind *:%s", formatedBindPort)
+			d.ExtraFrontend += fmt.Sprintf(m.getBindLine(), formatedBindPort)
 		}
 	}
 	if len(os.Getenv("CAPTURE_REQUEST_HEADER")) > 0 {
@@ -575,4 +575,15 @@ func (m HaProxy) validateConfig() error {
 		)
 	}
 	return nil
+}
+
+func (m HaProxy) getBindLine() string {
+	if strings.EqualFold(getSecretOrEnvVar("IP_PROTOCOL", ""), "v4v6") {
+		return "\n    bind :::%s v4v6"
+	}
+	if strings.EqualFold(getSecretOrEnvVar("IP_PROTOCOL", ""), "v6only") {
+		return "\n    bind :::%s v6only"
+	}
+
+	return "\n    bind *:%s"
 }

@@ -2282,6 +2282,54 @@ func (s HaProxyTestSuite) Test_CreateConfigFromTemplates_AddsDefaultPortsWithTex
 	s.Equal(expectedData, actualData)
 }
 
+func (s HaProxyTestSuite) Test_XXX() {
+	os.Setenv("IP_PROTOCOL", "v4v6")
+	defer func() { os.Setenv("IP_PROTOCOL", "") }()
+	var actualData string
+	tmpl := strings.Replace(
+		s.TemplateContent,
+		"\n    bind *:80\n    bind *:443",
+		"\n    bind :::80 v4v6\n    bind :::443 v4v6",
+		-1)
+	expectedData := fmt.Sprintf(
+		`%s%s`,
+		tmpl,
+		s.ServicesContent,
+	)
+	writeFile = func(filename string, data []byte, perm os.FileMode) error {
+		actualData = string(data)
+		return nil
+	}
+
+	NewHaProxy(s.TemplatesPath, s.ConfigsPath).CreateConfigFromTemplates()
+
+	s.Equal(expectedData, actualData)
+}
+
+func (s HaProxyTestSuite) Test_YYY() {
+	os.Setenv("IP_PROTOCOL", "v6only")
+	defer func() { os.Setenv("IP_PROTOCOL", "") }()
+	var actualData string
+	tmpl := strings.Replace(
+		s.TemplateContent,
+		"\n    bind *:80\n    bind *:443",
+		"\n    bind :::80 v6only\n    bind :::443 v6only",
+		-1)
+	expectedData := fmt.Sprintf(
+		`%s%s`,
+		tmpl,
+		s.ServicesContent,
+	)
+	writeFile = func(filename string, data []byte, perm os.FileMode) error {
+		actualData = string(data)
+		return nil
+	}
+
+	NewHaProxy(s.TemplatesPath, s.ConfigsPath).CreateConfigFromTemplates()
+
+	s.Equal(expectedData, actualData)
+}
+
 func (s HaProxyTestSuite) Test_CreateConfigFromTemplates_AddsCerts() {
 	readDirOrig := readDir
 	enableH2Orig := os.Getenv("ENABLE_H2")
